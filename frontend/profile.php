@@ -1,48 +1,50 @@
 <?php
 $userId   = $_COOKIE['user_id'] ?? null;
-$username = $_GET['user'] ?? ($_COOKIE['username'] ?? 'Guest');
+$username = $_COOKIE['username'] ?? 'Guest';
 $isLoggedIn = !empty($userId);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cloud9 - <?= htmlspecialchars($username) ?></title>
+    <title>Cloud9 - Profile</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { margin:0; font-family: Arial, sans-serif; background:#ffffff; color:#111;}
-        header { background:#e0f7fa; border-bottom:1px solid #b2ebf2; padding:1rem 2rem; display:flex; justify-content:flex-end; align-items:center;}
-        .logo { position:absolute; left:2rem; font-weight:bold; font-size:1.5rem; color:#00bcd4; }
-        nav a { color:#00bcd4; margin-left:1.5rem; text-decoration:none; font-weight:bold; }
+        body { margin:0; font-family: Arial, sans-serif; background:#ffffff; color:#111; }
+        header { background:#e0f7fa; border-bottom:1px solid #b2ebf2; padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center; }
+        .logo { font-weight:bold; font-size:1.5rem; color:#00bcd4; }
+        nav a { color:#00bcd4; margin-left:1rem; text-decoration:none; font-weight:bold; }
         nav a:hover { text-decoration:underline; }
-        .container { max-width:900px; margin:2rem auto; padding:0 1rem; }
-        .profile-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; }
-        .profile-name { font-size:1.5rem; color:#00bcd4; font-weight:bold; }
-        .btn-link { color:#00bcd4; text-decoration:none; }
-        .btn-link:hover { text-decoration:underline; }
-        .card { background:#f0f9f9; border-radius:.75rem; border:1px solid #b2ebf2; padding:1rem; margin-bottom:1rem; }
-        .card h3 { margin-top:0; margin-bottom:.4rem; font-size:1rem; }
-        .meta { font-size:.85rem; color:#555; margin-bottom:.4rem; display:flex; gap:.5rem; flex-wrap:wrap;}
-        .badge { padding:.1rem .5rem; border-radius:999px; font-size:.75rem; background:#00bcd4; color:#fff;}
-        .badge.expiring { background:#e53935; }
+        .container { max-width:900px; margin:1.5rem auto; padding:0 1rem; }
+        .profile-header { display:flex; gap:1.5rem; align-items:flex-start; }
+        .avatar { width:72px; height:72px; border-radius:999px; background:#b2ebf2; }
+        .badge { padding:.15rem .6rem; border-radius:999px; font-size:.7rem; background:#00bcd4; color:#fff; margin-left:.5rem; }
         .badge.verified { background:#4caf50; }
-        .blog-snippet { font-size:.9rem; color:#333; margin-bottom:.6rem; }
-        .card-footer { display:flex; justify-content:space-between; align-items:center; font-size:.85rem; }
+        .actions { margin-top:.6rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+        .btn { border:none; border-radius:.5rem; padding:.4rem .9rem; cursor:pointer; font-size:.85rem; }
+        .btn.primary { background:#00bcd4; color:#fff; }
+        .btn.outline { background:transparent; border:1px solid #00bcd4; color:#111; }
+        .stats { display:flex; gap:1.5rem; margin-top:.6rem; font-size:.85rem; color:#555; }
+        .section-title { margin:1.5rem 0 .7rem; font-size:1rem; color:#111; }
+        .blog-list { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
+        .card { background:#f0f9f9; border-radius:.75rem; padding:1rem; border:1px solid #b2ebf2; }
+        .card h3 { margin-top:0; font-size:1rem; }
+        .card p { font-size:.9rem; color:#333; }
+        .btn-link { color:#00bcd4; text-decoration:none; font-size:.9rem; }
+        .btn-link:hover { text-decoration:underline; }
     </style>
 </head>
 <body>
 <header>
     <div class="logo">Cloud9</div>
     <nav>
+        <a href="index.php">Home</a>
+        <a href="browse.php">Explore</a>
+        <a href="inbox.php">DMs</a>
+        <a href="profile.php">My Profile</a>
         <?php if ($isLoggedIn): ?>
-            <a href="index.php">Home</a>
-            <a href="browse.php">Browse</a>
-            <a href="inbox.php">DMs</a>
-            <a href="profile.php">My Profile</a>
             <a href="/api/logout.php">Logout</a>
         <?php else: ?>
-            <a href="index.php">Home</a>
-            <a href="browse.php">Browse</a>
             <a href="login.php">Login</a>
             <a href="register.php">Sign Up</a>
         <?php endif; ?>
@@ -50,27 +52,31 @@ $isLoggedIn = !empty($userId);
 </header>
 
 <main class="container">
-    <div class="profile-header">
-        <div class="profile-name"><?= htmlspecialchars($username) ?></div>
-        <?php if ($isLoggedIn && $username === $_COOKIE['username']): ?>
-            <a class="btn-link" href="edit_profile.php">Edit Profile</a>
-        <?php endif; ?>
-    </div>
+    <section class="profile-header">
+        <div class="avatar"></div>
+        <div>
+            <h1>@<?= htmlspecialchars($username) ?> <span class="badge verified">Verified</span></h1>
+            <p>Welcome to your Cloud9 profile, <?= htmlspecialchars($username) ?>.</p>
+            <div class="actions">
+                <button class="btn primary">Follow</button>
+                <button class="btn outline">Message</button>
+            </div>
+            <div class="stats">
+                <span>42 blogs</span>
+                <span>120 followers</span>
+                <span>88 following</span>
+            </div>
+        </div>
+    </section>
 
     <section>
-        <h2 class="section-title">Blogs by <?= htmlspecialchars($username) ?></h2>
-        <div class="card">
-            <h3>Sample Blog Title</h3>
-            <div class="meta">
-                <span>2 hours ago</span>
-                <span class="badge verified">Verified</span>
-                <span class="badge expiring">Expires in 5 days</span>
-            </div>
-            <p class="blog-snippet">Short preview of the blog content...</p>
-            <div class="card-footer">
-                <a class="btn-link" href="blog_view.php?id=1">Read more</a>
-                <span>123 views • 12 replies</span>
-            </div>
+        <h2 class="section-title">Recent blogs</h2>
+        <div class="blog-list">
+            <article class="card">
+                <h3>AWS IAM Best Practices</h3>
+                <p>Short description of the blog...</p>
+                <a class="btn-link" href="blog_view.php?id=1">Open blog</a>
+            </article>
         </div>
     </section>
 </main>

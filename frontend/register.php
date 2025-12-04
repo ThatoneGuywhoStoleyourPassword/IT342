@@ -24,7 +24,7 @@ $isLoggedIn = !empty($userId);
 </head>
 <body>
 <div class="card">
-    <h1>Register</h1>
+    <h1>Cloud9</h1>
     <a class="back-home" href="index.php">Back to Home</a>
 
     <?php if (!empty($_GET['error'])): ?>
