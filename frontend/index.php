@@ -1,67 +1,61 @@
 <?php
-
 $userId   = $_COOKIE['user_id'] ?? null;
 $username = $_COOKIE['username'] ?? 'Guest';
 $isLoggedIn = !empty($userId);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cloud9g - Home</title>
+    <title>Cloud9</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { margin:0; font-family: Arial, sans-serif; background:#0f172a; color:#e5e7eb; }
-        header { background:#111827; border-bottom:1px solid #1f2933; padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center;}
-        .logo { font-weight:bold; font-size:1.3rem; }
-        nav a { color:#9ca3af; margin-left:1rem; text-decoration:none; }
-        nav a:hover { color:#ffffff; }
-        .container { max-width:1100px; margin:1.5rem auto; padding:0 1rem; }
+        body { margin:0; font-family: Arial, sans-serif; background:#ffffff; color:#111; }
+        header { background:#e0f7fa; border-bottom:1px solid #b2ebf2; padding:1rem 2rem; display:flex; justify-content:flex-end; align-items:center;}
+        .logo { position:absolute; left:2rem; font-weight:bold; font-size:1.5rem; color:#00bcd4; }
+        nav a { color:#00bcd4; margin-left:1.5rem; text-decoration:none; font-weight:bold; }
+        nav a:hover { text-decoration:underline; }
+        .container { max-width:1100px; margin:2rem auto; padding:0 1rem; }
         .search-bar { display:flex; gap:.5rem; margin-bottom:1.5rem; }
-        .search-bar input, .search-bar select { flex:1; padding:.6rem .8rem; border-radius:.5rem; border:1px solid #374151; background:#020617; color:#e5e7eb; }
-        .search-bar button { padding:.6rem 1.2rem; border-radius:.5rem; border:none; background:#4f46e5; color:#fff; cursor:pointer; }
-        .search-bar button:hover { background:#6366f1; }
-        .section-title { font-size:1.1rem; margin:1.5rem 0 .8rem; }
+        .search-bar input, .search-bar select { flex:1; padding:.6rem .8rem; border-radius:.5rem; border:1px solid #00bcd4; background:#ffffff; color:#111; }
+        .search-bar button { padding:.6rem 1.2rem; border-radius:.5rem; border:none; background:#00bcd4; color:#fff; cursor:pointer; }
+        .search-bar button:hover { background:#00acc1; }
+        .section-title { font-size:1.2rem; margin:1.5rem 0 .8rem; color:#111; }
         .grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
-        .card { background:#020617; border-radius:.75rem; padding:1rem; border:1px solid #1f2937; }
+        .card { background:#f0f9f9; border-radius:.75rem; padding:1rem; border:1px solid #b2ebf2; }
         .card h3 { margin-top:0; margin-bottom:.4rem; font-size:1rem; }
-        .meta { font-size:.8rem; color:#9ca3af; margin-bottom:.4rem; display:flex; gap:.5rem; flex-wrap:wrap;}
-        .badge { padding:.1rem .5rem; border-radius:999px; font-size:.7rem; background:#1d4ed8; color:#e5e7eb;}
-        .badge.expiring { background:#b91c1c; }
-        .badge.verified { background:#16a34a; }
-        .blog-snippet { font-size:.9rem; color:#d1d5db; margin-bottom:.6rem; }
-        .card-footer { display:flex; justify-content:space-between; align-items:center; font-size:.8rem; }
-        .btn-link { color:#60a5fa; text-decoration:none; }
+        .meta { font-size:.85rem; color:#555; margin-bottom:.4rem; display:flex; gap:.5rem; flex-wrap:wrap;}
+        .badge { padding:.1rem .5rem; border-radius:999px; font-size:.75rem; background:#00bcd4; color:#fff;}
+        .badge.expiring { background:#e53935; }
+        .badge.verified { background:#4caf50; }
+        .blog-snippet { font-size:.9rem; color:#333; margin-bottom:.6rem; }
+        .card-footer { display:flex; justify-content:space-between; align-items:center; font-size:.85rem; }
+        .btn-link { color:#00bcd4; text-decoration:none; }
         .btn-link:hover { text-decoration:underline; }
     </style>
 </head>
 <body>
 <header>
     <div class="logo">Cloud9</div>
-
     <nav>
-        <!-- Always show Browse -->
-        <a href="browse.php">Browse</a>
-
         <?php if ($isLoggedIn): ?>
-            <!-- Logged IN links -->
             <a href="index.php">Home</a>
+            <a href="browse.php">Browse</a>
             <a href="inbox.php">DMs</a>
             <a href="profile.php">My Profile</a>
             <a href="/api/logout.php">Logout</a>
         <?php else: ?>
-            <!-- Logged OUT links -->
+            <a href="index.php">Home</a>
+            <a href="browse.php">Browse</a>
             <a href="login.php">Login</a>
             <a href="register.php">Sign Up</a>
         <?php endif; ?>
     </nav>
 </header>
 
-
 <main class="container">
     <section>
-        <h2 class="section-title">Search blogs &amp; bloggers</h2>
+        <h2 class="section-title">Search blogs & bloggers</h2>
         <form class="search-bar" method="get" action="browse.php">
             <input type="text" name="q" placeholder="Search blog titles, tags, or bloggers...">
             <select name="type">
@@ -75,7 +69,6 @@ $isLoggedIn = !empty($userId);
     <section>
         <h2 class="section-title">Latest blogs</h2>
         <div class="grid">
-            <!-- PHP: Loop through latest blogs -->
             <article class="card">
                 <h3>Sample Blog Title</h3>
                 <div class="meta">
@@ -92,10 +85,8 @@ $isLoggedIn = !empty($userId);
                     <span>123 views • 12 replies</span>
                 </div>
             </article>
-            <!-- /PHP loop -->
         </div>
     </section>
 </main>
 </body>
 </html>
-
