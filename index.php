@@ -78,23 +78,5 @@ nav a:hover { text-decoration:underline; }
     </section>
 </main>
 
-<script>
-// Real-time login/logout update using fetch
-async function checkSession() {
-    const res = await fetch('backend/check_session.php');
-    const data = await res.json();
-    const nav = document.getElementById('nav-links');
-    nav.innerHTML = '<a href="index.php">Home</a><a href="browse.php">Browse</a>';
-    if(data.logged_in){
-        nav.innerHTML += `<a href="inbox.php">DMs</a>
-                          <a href="profile.php">My Profile</a>
-                          <a href="backend/logout.php" id="logout-link">Logout</a>`;
-    } else {
-        nav.innerHTML += `<a href="login.php">Login</a>
-                          <a href="register.php">Register</a>`;
-    }
-}
-setInterval(checkSession, 5000); // check every 5s
-</script>
 </body>
 </html>

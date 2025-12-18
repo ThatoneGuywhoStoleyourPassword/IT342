@@ -6,7 +6,28 @@ $userId   = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 $viewUserId = $_GET['user_id'] ?? $userId;
 
-// Fetch user info, blog counts, followers, following, blogs (keep existing code)
+/* =========================
+   HANDLE BLOG DELETE (OWNER ONLY)
+   ========================= */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_blog_id'])) {
+    $blogId = (int)$_POST['delete_blog_id'];
+
+    // Ensure blog belongs to logged-in user
+    $stmt = $db->prepare("SELECT id FROM blogs WHERE id=? AND user_id=?");
+    $stmt->execute([$blogId, $userId]);
+
+    if ($stmt->fetch()) {
+        $del = $db->prepare("DELETE FROM blogs WHERE id=?");
+        $del->execute([$blogId]);
+    }
+
+    header("Location: profile.php");
+    exit;
+}
+
+/* =========================
+   FETCH PROFILE DATA
+   ========================= */
 $stmt = $db->prepare("SELECT username FROM users WHERE id=?");
 $stmt->execute([$viewUserId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -24,7 +45,11 @@ $stmt = $db->prepare("SELECT COUNT(*) FROM follows WHERE follower_id=?");
 $stmt->execute([$viewUserId]);
 $following = $stmt->fetchColumn();
 
-$stmt = $db->prepare("SELECT * FROM blogs WHERE user_id=? AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY created_at DESC");
+$stmt = $db->prepare("
+    SELECT * FROM blogs 
+    WHERE user_id=? AND (expires_at IS NULL OR expires_at > NOW()) 
+    ORDER BY created_at DESC
+");
 $stmt->execute([$viewUserId]);
 $blogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -50,7 +75,20 @@ nav a:hover { text-decoration:underline; }
 .stats { display:flex; gap:1.5rem; margin-top:.6rem; font-size:.85rem; color:#555; }
 .section-title { margin:1.5rem 0 .7rem; font-size:1rem; color:#111; }
 .blog-list { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
-.card { background:#f0f9f9; border-radius:.75rem; padding:1rem; border:1px solid #b2ebf2; }
+.card { position:relative; background:#f0f9f9; border-radius:.75rem; padding:1rem; border:1px solid #b2ebf2; }
+.card:hover .delete-btn { opacity:1; }
+.delete-btn {
+    position:absolute;
+    top:8px;
+    right:10px;
+    background:none;
+    border:none;
+    color:#e53935;
+    font-size:1rem;
+    cursor:pointer;
+    opacity:0;
+}
+.delete-btn:hover { transform:scale(1.1); }
 .btn-link { color:#00bcd4; text-decoration:none; font-size:.9rem; }
 .btn-link:hover { text-decoration:underline; }
 </style>
@@ -79,7 +117,7 @@ nav a:hover { text-decoration:underline; }
             </div>
             <?php if($viewUserId !== $userId): ?>
                 <div class="actions">
-                    <form method="post" action="backend/follow_user.php" style="display:inline;">
+                    <form method="post" action="backend/follow_user.php">
                         <input type="hidden" name="follow_user_id" value="<?= $viewUserId ?>">
                         <button class="btn primary">Follow</button>
                     </form>
@@ -90,24 +128,31 @@ nav a:hover { text-decoration:underline; }
     </section>
 
     <?php if($userId === $viewUserId): ?>
-        <section>
-            <h2 class="section-title">Post a new blog</h2>
-            <form id="blog-form" enctype="multipart/form-data">
-                <input type="text" name="title" placeholder="Title" required style="width:100%;margin-bottom:.5rem;">
-                <textarea name="content" placeholder="Content" required style="width:100%;margin-bottom:.5rem;"></textarea>
-                <label><input type="checkbox" name="cloud_blog"> Cloud blog (expires in 24h)</label><br><br>
-                <input type="file" name="image"><br><br>
-                <button type="submit">Post</button>
-            </form>
-            <div id="blog-message" style="margin-top:.5rem;color:green;"></div>
-        </section>
+    <section>
+        <h2 class="section-title">Post a new blog</h2>
+        <form id="blog-form" enctype="multipart/form-data">
+            <input type="text" name="title" placeholder="Title" required style="width:100%;margin-bottom:.5rem;">
+            <textarea name="content" placeholder="Content" required style="width:100%;margin-bottom:.5rem;"></textarea>
+            <label><input type="checkbox" name="cloud_blog"> Cloud blog (expires in 24h)</label><br><br>
+            <input type="file" name="image"><br><br>
+            <button type="submit">Post</button>
+        </form>
+        <div id="blog-message" style="margin-top:.5rem;color:green;"></div>
+    </section>
     <?php endif; ?>
 
     <section>
         <h2 class="section-title">Recent blogs</h2>
-        <div class="blog-list" id="blog-list">
+        <div class="blog-list">
             <?php foreach($blogs as $b): ?>
                 <div class="card">
+                    <?php if($userId === $viewUserId): ?>
+                        <form method="post" style="position:absolute;top:0;right:0;">
+                            <input type="hidden" name="delete_blog_id" value="<?= $b['id'] ?>">
+                            <button class="delete-btn" title="Delete">✕</button>
+                        </form>
+                    <?php endif; ?>
+
                     <h3><?= htmlspecialchars($b['title']) ?></h3>
                     <?php if($b['image']): ?>
                         <img src="<?= htmlspecialchars($b['image']) ?>" style="width:100%; max-height:200px; object-fit:cover; margin-bottom:.5rem;">
@@ -121,16 +166,13 @@ nav a:hover { text-decoration:underline; }
 </main>
 
 <script>
-// AJAX blog post
 document.getElementById('blog-form')?.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    const res = await fetch('backend/post_blog.php', {method:'POST', body:formData});
+    const formData = new FormData(e.target);
+    const res = await fetch('backend/post_blog.php', { method:'POST', body:formData });
     if(res.ok){
         document.getElementById('blog-message').innerText = 'Blog posted!';
-        form.reset();
-        setTimeout(()=>location.reload(), 1000);
+        setTimeout(()=>location.reload(), 800);
     } else {
         document.getElementById('blog-message').innerText = 'Failed to post blog';
     }
