@@ -26,6 +26,7 @@ if (!$user['verified']) {
 
 $_SESSION['user_id']  = $user['id'];
 $_SESSION['username'] = $user['username'];
+$_SESSION['email']    = $user['email'];
 
 header('Location: /index.php');
 exit;

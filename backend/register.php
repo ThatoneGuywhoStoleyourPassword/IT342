@@ -1,5 +1,6 @@
 <?php
 require 'db.php';
+require 'email.php';
 
 $email = $_POST['email'] ?? '';
 $username = $_POST['username'] ?? '';
@@ -16,7 +17,6 @@ if($password !== $password_confirm) {
     exit;
 }
 
-// Check if email or username already exists
 $stmt = $db->prepare("SELECT id FROM users WHERE email=? OR username=?");
 $stmt->execute([$email, $username]);
 if($stmt->fetch()) {
@@ -25,16 +25,18 @@ if($stmt->fetch()) {
 }
 
 $password_hash = password_hash($password, PASSWORD_DEFAULT);
-$stmt = $db->prepare("INSERT INTO users (email, username, password_hash) VALUES (?,?,?)");
+$stmt = $db->prepare("INSERT INTO users (email, username, password_hash, verified) VALUES (?,?,?,0)");
 $stmt->execute([$email, $username, $password_hash]);
 
-// Send verification email
 $token = bin2hex(random_bytes(16));
 $stmt = $db->prepare("INSERT INTO email_verifications (user_id, token) VALUES (?,?)");
 $stmt->execute([$db->lastInsertId(), $token]);
 
-mail($email, "Verify your Cloud9 account",
-    "Click this link to verify: http://IT342-Project-ALB-1012094198.us-east-2.elb.amazonaws.com/api/verify_email.php?token=$token");
+$verify_link = "http://{$_SERVER['HTTP_HOST']}/backend/verify_email.php?token=$token";
+$subject = "Verify your Cloud9 account";
+$body = "Click this link to verify your account: <a href='$verify_link'>$verify_link</a>";
+
+send_email($email, $subject, $body);
 
 header('Location: /login.php?success=Check your email for verification');
 exit;

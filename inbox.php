@@ -1,7 +1,39 @@
 <?php
-require '../backend/auth.php';
-$userId   = $_SESSION['user_id'];
+require 'backend/auth.php';
+require 'backend/db.php';
+
+$userId = $_SESSION['user_id'];
 $username = $_SESSION['username'];
+
+// Handle thread selection
+$selectedThread = $_GET['thread'] ?? null;
+
+if($selectedThread){
+    $stmt = $db->prepare("SELECT * FROM threads WHERE id=? AND (user1_id=? OR user2_id=?)");
+    $stmt->execute([$selectedThread,$userId,$userId]);
+    $thread = $stmt->fetch(PDO::FETCH_ASSOC);
+    if(!$thread) $selectedThread = null;
+}
+
+// Fetch all threads
+$stmt = $db->prepare("
+    SELECT t.*, u1.username as user1_name, u2.username as user2_name
+    FROM threads t
+    JOIN users u1 ON t.user1_id = u1.id
+    JOIN users u2 ON t.user2_id = u2.id
+    WHERE t.user1_id=? OR t.user2_id=?
+    ORDER BY t.updated_at DESC
+");
+$stmt->execute([$userId,$userId]);
+$threads = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch messages for selected thread
+$messages = [];
+if($selectedThread){
+    $stmt = $db->prepare("SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.thread_id=? ORDER BY created_at ASC");
+    $stmt->execute([$selectedThread]);
+    $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +42,7 @@ $username = $_SESSION['username'];
 <title>Cloud9 - Inbox</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body { margin:0; font-family: Arial, sans-serif; background:#ffffff; color:#111; }
+body { margin:0; font-family: Arial, sans-serif; background:#fff; color:#111; }
 header { background:#e0f7fa; border-bottom:1px solid #b2ebf2; padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center; }
 .logo { font-weight:bold; font-size:1.5rem; color:#00bcd4; }
 nav a { color:#00bcd4; margin-left:1rem; text-decoration:none; font-weight:bold; }
@@ -19,14 +51,13 @@ nav a:hover { text-decoration:underline; }
 .thread-list { background:#f0f9f9; border-radius:.75rem; border:1px solid #b2ebf2; overflow:hidden; }
 .thread-list h2 { margin:0; padding:.9rem 1rem; border-bottom:1px solid #b2ebf2; font-size:1rem; }
 .thread { padding:.7rem 1rem; border-bottom:1px solid #e0f7fa; cursor:pointer; }
-.thread:hover { background:#e0f7fa; }
+.thread:hover, .thread.active { background:#e0f7fa; }
 .chat { background:#f0f9f9; border-radius:.75rem; border:1px solid #b2ebf2; display:flex; flex-direction:column; }
 .chat-header { padding:.9rem 1rem; border-bottom:1px solid #b2ebf2; display:flex; justify-content:space-between; align-items:center; }
 .messages { padding:1rem; flex:1; display:flex; flex-direction:column; gap:.5rem; overflow-y:auto; max-height:420px; }
 .msg { max-width:70%; padding:.5rem .7rem; border-radius:.75rem; font-size:.85rem; }
 .msg.me { margin-left:auto; background:#00bcd4; color:#fff; }
 .msg.them { background:#e0f7fa; }
-.msg-meta { font-size:.7rem; color:#555; margin-top:.2rem; }
 form { border-top:1px solid #b2ebf2; display:flex; gap:.5rem; padding:.7rem 1rem; }
 textarea { flex:1; resize:none; min-height:50px; border-radius:.5rem; border:1px solid #00bcd4; background:#fff; color:#111; padding:.5rem .7rem; }
 button { border:none; border-radius:.5rem; padding:.5rem 1rem; background:#00bcd4; color:#fff; cursor:pointer; }
@@ -41,29 +72,46 @@ button:hover { background:#00acc1; }
         <a href="browse.php">Browse</a>
         <a href="inbox.php">DMs</a>
         <a href="profile.php">My Profile</a>
-        <a href="../backend/logout.php">Logout</a>
+        <a href="backend/logout.php">Logout</a>
     </nav>
 </header>
 
 <main class="container">
     <section class="thread-list">
         <h2>Messages</h2>
-        <!-- Empty; threads will load dynamically -->
+        <?php foreach($threads as $t): 
+            $otherUser = ($t['user1_id']==$userId)? $t['user2_name'] : $t['user1_name'];
+        ?>
+            <a class="thread <?= ($selectedThread==$t['id'])?'active':'' ?>" href="inbox.php?thread=<?= $t['id'] ?>">
+                <?= htmlspecialchars($otherUser) ?><br>
+                <span style="font-size:.75rem;color:#555;"><?= substr($t['last_message'],0,30) ?>...</span>
+            </a>
+        <?php endforeach; ?>
     </section>
 
     <section class="chat">
-        <div class="chat-header">
-            <div>
-                <strong>Select a thread</strong>
+        <?php if($selectedThread): ?>
+            <div class="chat-header">
+                <div><strong>Chat with <?= htmlspecialchars($otherUser) ?></strong></div>
             </div>
-        </div>
-        <div class="messages">
-            <!-- Empty; messages will load dynamically -->
-        </div>
-        <form method="post" action="../backend/send_message.php">
-            <textarea name="content" placeholder="Type a message..."></textarea>
-            <button type="submit">Send</button>
-        </form>
+            <div class="messages">
+                <?php foreach($messages as $m): ?>
+                    <div class="msg <?= ($m['sender_id']==$userId)?'me':'them' ?>">
+                        <?= nl2br(htmlspecialchars($m['content'])) ?>
+                        <div class="msg-meta"><?= htmlspecialchars($m['username']) ?> - <?= date('M j H:i', strtotime($m['created_at'])) ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <form method="post" action="backend/send_message.php">
+                <input type="hidden" name="thread_id" value="<?= $selectedThread ?>">
+                <textarea name="content" placeholder="Type a message..." required></textarea>
+                <button type="submit">Send</button>
+            </form>
+        <?php else: ?>
+            <div class="chat-header">
+                <strong>Select a thread to start chatting</strong>
+            </div>
+        <?php endif; ?>
     </section>
 </main>
 </body>

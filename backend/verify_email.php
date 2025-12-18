@@ -1,19 +1,20 @@
 <?php
 require 'db.php';
-$code = $_GET['code'] ?? '';
+require 'email.php';
 
-if(!$code) { die("Invalid verification code."); }
+$token = $_GET['token'] ?? '';
+if(!$token) { die("Invalid verification token."); }
 
-$stmt = $db->prepare("SELECT id FROM users WHERE verification_code=?");
-$stmt->execute([$code]);
-$user = $stmt->fetch();
+$stmt = $db->prepare("SELECT user_id FROM email_verifications WHERE token=?");
+$stmt->execute([$token]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if(!$user) {
-    die("Invalid verification code.");
-}
+if(!$user) { die("Invalid or expired verification token."); }
 
-// Update user to verified
-$update = $db->prepare("UPDATE users SET is_verified=1, verification_code=NULL WHERE id=?");
-$update->execute([$user['id']]);
+$update = $db->prepare("UPDATE users SET verified=1 WHERE id=?");
+$update->execute([$user['user_id']]);
+
+$stmt = $db->prepare("DELETE FROM email_verifications WHERE token=?");
+$stmt->execute([$token]);
 
 echo "Email verified! You can now <a href='/login.php'>login</a>.";

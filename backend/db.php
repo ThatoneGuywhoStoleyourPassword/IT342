@@ -1,9 +1,9 @@
 <?php
 // Database connection
-$host = 'localhost';
+$host = '10.0.21.56';
 $dbname = 'cloud9';
-$user = 'root';
-$pass = '';
+$user = 'cloud9user';
+$pass = 'cloud9pass';
 
 try {
     $db = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);

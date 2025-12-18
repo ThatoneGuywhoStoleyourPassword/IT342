@@ -1,7 +1,36 @@
 <?php
-require '../backend/auth.php';
+require 'backend/auth.php';
+require 'backend/db.php';
+
 $userId   = $_SESSION['user_id'];
 $username = $_SESSION['username'];
+
+$viewUserId = $_GET['user_id'] ?? $userId;
+
+// Fetch user info
+$stmt = $db->prepare("SELECT username FROM users WHERE id=?");
+$stmt->execute([$viewUserId]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+if(!$user) die("User not found");
+
+// Blog counts
+$stmt = $db->prepare("SELECT COUNT(*) FROM blogs WHERE user_id=?");
+$stmt->execute([$viewUserId]);
+$blogCount = $stmt->fetchColumn();
+
+// Followers/following
+$stmt = $db->prepare("SELECT COUNT(*) FROM follows WHERE following_id=?");
+$stmt->execute([$viewUserId]);
+$followers = $stmt->fetchColumn();
+
+$stmt = $db->prepare("SELECT COUNT(*) FROM follows WHERE follower_id=?");
+$stmt->execute([$viewUserId]);
+$following = $stmt->fetchColumn();
+
+// Fetch user's blogs
+$stmt = $db->prepare("SELECT * FROM blogs WHERE user_id=? AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY created_at DESC");
+$stmt->execute([$viewUserId]);
+$blogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,10 +64,10 @@ nav a:hover { text-decoration:underline; }
     <div class="logo">Cloud9</div>
     <nav>
         <a href="index.php">Home</a>
-        <a href="browse.php">Explore</a>
+        <a href="browse.php">Browse</a>
         <a href="inbox.php">DMs</a>
         <a href="profile.php">My Profile</a>
-        <a href="../backend/logout.php">Logout</a>
+        <a href="backend/logout.php">Logout</a>
     </nav>
 </header>
 
@@ -46,24 +75,37 @@ nav a:hover { text-decoration:underline; }
     <section class="profile-header">
         <div class="avatar"></div>
         <div>
-            <h1>@<?= htmlspecialchars($username) ?></h1>
-            <p>Welcome to your Cloud9 profile, <?= htmlspecialchars($username) ?>.</p>
-            <div class="actions">
-                <button class="btn primary">Follow</button>
-                <button class="btn outline">Message</button>
-            </div>
+            <h1>@<?= htmlspecialchars($user['username']) ?></h1>
             <div class="stats">
-                <span>0 blogs</span>
-                <span>0 followers</span>
-                <span>0 following</span>
+                <span><?= $blogCount ?> blogs</span>
+                <span><?= $followers ?> followers</span>
+                <span><?= $following ?> following</span>
             </div>
+            <?php if($viewUserId !== $userId): ?>
+                <div class="actions">
+                    <form method="post" action="backend/follow_user.php" style="display:inline;">
+                        <input type="hidden" name="follow_user_id" value="<?= $viewUserId ?>">
+                        <button class="btn primary">Follow</button>
+                    </form>
+                    <a class="btn outline" href="inbox.php?start_thread=<?= $viewUserId ?>">Message</a>
+                </div>
+            <?php endif; ?>
         </div>
     </section>
 
     <section>
         <h2 class="section-title">Recent blogs</h2>
         <div class="blog-list">
-            <!-- Empty; dynamic content loads here -->
+            <?php foreach($blogs as $b): ?>
+                <div class="card">
+                    <h3><?= htmlspecialchars($b['title']) ?></h3>
+                    <?php if($b['image']): ?>
+                        <img src="<?= htmlspecialchars($b['image']) ?>" style="width:100%; max-height:200px; object-fit:cover; margin-bottom:.5rem;">
+                    <?php endif; ?>
+                    <div><?= nl2br(htmlspecialchars(substr($b['content'],0,150))) ?>...</div>
+                    <a class="btn-link" href="blog_view.php?id=<?= $b['id'] ?>">Read more</a>
+                </div>
+            <?php endforeach; ?>
         </div>
     </section>
 </main>

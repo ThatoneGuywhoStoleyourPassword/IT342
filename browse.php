@@ -1,9 +1,34 @@
 <?php
 session_start();
-$userId   = $_SESSION['user_id'] ?? null;
+require 'backend/db.php';
+
+$userId = $_SESSION['user_id'] ?? null;
 $username = $_SESSION['username'] ?? null;
-$query = $_GET['q'] ?? '';
-$type  = $_GET['type'] ?? 'blogs';
+
+$queryStr = $_GET['q'] ?? '';
+$type = $_GET['type'] ?? 'blogs';
+
+$blogs = [];
+if($type==='blogs'){
+    $stmt = $db->prepare("
+        SELECT b.id, b.title, b.content, b.image, b.is_cloud_blog, b.expires_at, u.username
+        FROM blogs b
+        JOIN users u ON b.user_id = u.id
+        WHERE (b.expires_at IS NULL OR b.expires_at > NOW())
+        AND (b.title LIKE ? OR b.content LIKE ?)
+        ORDER BY b.created_at DESC
+    ");
+    $likeQuery = "%$queryStr%";
+    $stmt->execute([$likeQuery, $likeQuery]);
+    $blogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$users = [];
+if($type==='bloggers' && $queryStr){
+    $stmt = $db->prepare("SELECT id, username FROM users WHERE username LIKE ?");
+    $stmt->execute(["%$queryStr%"]);
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,15 +61,20 @@ nav a:hover { text-decoration:underline; }
     <nav>
         <a href="index.php">Home</a>
         <a href="browse.php">Browse</a>
-        <a href="inbox.php">DMs</a>
-        <a href="profile.php">My Profile</a>
-        <a href="../backend/logout.php">Logout</a>
+        <?php if($userId): ?>
+            <a href="inbox.php">DMs</a>
+            <a href="profile.php">My Profile</a>
+            <a href="backend/logout.php">Logout</a>
+        <?php else: ?>
+            <a href="login.php">Login</a>
+            <a href="register.php">Register</a>
+        <?php endif; ?>
     </nav>
 </header>
 
 <main class="container">
     <form class="search-bar" method="get">
-        <input type="text" name="q" placeholder="Search..." value="<?= htmlspecialchars($query) ?>">
+        <input type="text" name="q" placeholder="Search..." value="<?= htmlspecialchars($queryStr) ?>">
         <select name="type">
             <option value="blogs" <?= $type==='blogs'?'selected':'' ?>>Blogs</option>
             <option value="bloggers" <?= $type==='bloggers'?'selected':'' ?>>Bloggers</option>
@@ -53,7 +83,26 @@ nav a:hover { text-decoration:underline; }
     </form>
 
     <div class="grid">
-        <!-- Empty browse results -->
+        <?php if($type==='blogs'): ?>
+            <?php foreach($blogs as $blog): ?>
+                <div class="card">
+                    <h3><?= htmlspecialchars($blog['title']) ?></h3>
+                    <div class="meta">@<?= htmlspecialchars($blog['username']) ?> <?php if($blog['is_cloud_blog']) echo '<span class="badge">Cloud</span>'; ?></div>
+                    <?php if($blog['image']): ?>
+                        <img src="<?= htmlspecialchars($blog['image']) ?>" style="width:100%; max-height:200px; object-fit:cover; margin-bottom:.5rem;">
+                    <?php endif; ?>
+                    <div><?= nl2br(htmlspecialchars(substr($blog['content'],0,150))) ?>...</div>
+                    <a class="btn-link" href="blog_view.php?id=<?= $blog['id'] ?>">Read more</a>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <?php foreach($users as $u): ?>
+                <div class="card">
+                    <h3>@<?= htmlspecialchars($u['username']) ?></h3>
+                    <a class="btn-link" href="profile.php?user_id=<?= $u['id'] ?>">View profile</a>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </main>
 </body>

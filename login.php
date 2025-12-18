@@ -1,5 +1,9 @@
 <?php
 session_start();
+if(isset($_SESSION['user_id'])){
+    header('Location: index.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,6 +23,7 @@ a { color:#00bcd4; font-size:.85rem; text-decoration:none; }
 a:hover { text-decoration:underline; }
 .back-home { display:block; text-align:center; margin-bottom:1rem; }
 .error { color:#e53935; font-size:.85rem; margin-bottom:.5rem; text-align:center; }
+.success { color:green; font-size:.85rem; margin-bottom:.5rem; text-align:center; }
 </style>
 </head>
 <body>
@@ -28,9 +33,11 @@ a:hover { text-decoration:underline; }
 
     <?php if (!empty($_GET['error'])): ?>
         <div class="error"><?= htmlspecialchars($_GET['error']) ?></div>
+    <?php elseif(!empty($_GET['success'])): ?>
+        <div class="success"><?= htmlspecialchars($_GET['success']) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="../backend/login.php">
+    <form method="post" action="backend/login.php">
         <label for="email">Email or Username</label>
         <input id="email" name="email" required>
 

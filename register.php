@@ -1,5 +1,9 @@
 <?php
 session_start();
+if(isset($_SESSION['user_id'])){
+    header('Location: index.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,13 +12,8 @@ session_start();
 <title>Cloud9 - Register</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body {
-    margin:0; font-family: Arial, sans-serif; background:#ffffff; color:#111;
-    display:flex; align-items:center; justify-content:center; height:100vh;
-}
-.card {
-    background:#f0f9f9; border-radius:.75rem; border:1px solid #b2ebf2; padding:2rem; width:360px;
-}
+body { margin:0; font-family: Arial, sans-serif; background:#ffffff; color:#111; display:flex; align-items:center; justify-content:center; height:100vh; }
+.card { background:#f0f9f9; border-radius:.75rem; border:1px solid #b2ebf2; padding:2rem; width:360px; }
 h1 { margin-top:0; margin-bottom:1rem; font-size:1.5rem; color:#00bcd4; text-align:center; }
 label { display:block; font-size:.85rem; margin-bottom:.25rem; }
 input { width:100%; padding:.5rem .7rem; margin-bottom:.8rem; border-radius:.5rem; border:1px solid #00bcd4; background:#fff; color:#111; }
@@ -35,7 +34,7 @@ a:hover { text-decoration:underline; }
         <div class="error"><?= htmlspecialchars($_GET['error']) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="../backend/register.php">
+    <form method="post" action="backend/register.php">
         <label for="username">Username</label>
         <input id="username" name="username" required>
 
