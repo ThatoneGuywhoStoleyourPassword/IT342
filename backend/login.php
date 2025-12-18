@@ -1,6 +1,6 @@
 <?php
 require 'db.php';
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 $identifier = $_POST['email'] ?? '';
 $password   = $_POST['password'] ?? '';

@@ -9,7 +9,6 @@ if (!$followUserId) die("Missing user id.");
 $stmt = $db->prepare("INSERT IGNORE INTO follows (follower_id, following_id) VALUES (?, ?)");
 $stmt->execute([$_SESSION['user_id'], $followUserId]);
 
-// Notify the followed user
 $stmt = $db->prepare("SELECT email, username FROM users WHERE id=?");
 $stmt->execute([$followUserId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);

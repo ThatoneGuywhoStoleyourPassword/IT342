@@ -1,7 +1,7 @@
 <?php
 require 'db.php';
 require 'email.php';
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 $userId = $_SESSION['user_id'] ?? null;
 $username = $_SESSION['username'] ?? null;
@@ -23,7 +23,6 @@ $expires_at = $isCloud ? date('Y-m-d H:i:s', time() + 24*60*60) : null;
 $stmt = $db->prepare("INSERT INTO blogs (user_id, title, content, image, is_cloud_blog, expires_at, created_at) VALUES (?,?,?,?,?,?,?)");
 $stmt->execute([$userId, $title, $content, $imagePath, $isCloud, $expires_at, date('Y-m-d H:i:s')]);
 
-// Notify followers
 $stmt = $db->prepare("SELECT u.email FROM follows f JOIN users u ON f.follower_id = u.id WHERE f.following_id=?");
 $stmt->execute([$userId]);
 $followers = $stmt->fetchAll(PDO::FETCH_ASSOC);

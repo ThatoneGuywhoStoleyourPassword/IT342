@@ -1,6 +1,5 @@
 <?php
 require 'db.php';
-require 'email.php';
 
 $token = $_GET['token'] ?? '';
 if(!$token) { die("Invalid verification token."); }
