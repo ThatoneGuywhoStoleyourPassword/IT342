@@ -1,9 +1,7 @@
+// login.php  (FRONTEND PAGE)
 <?php
 session_start();
-if(isset($_SESSION['user_id'])){
-    header('Location: index.php');
-    exit;
-}
+// REMOVED auto-redirect so Login always loads even if logged in
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +27,7 @@ a:hover { text-decoration:underline; }
 <body>
 <div class="card">
     <h1>Cloud9</h1>
-    <a class="back-home" href="index.php">Back to Home</a>
+    <a class="back-home" href="/index.php">Back to Home</a>
 
     <?php if (!empty($_GET['error'])): ?>
         <div class="error"><?= htmlspecialchars($_GET['error']) ?></div>
@@ -37,7 +35,7 @@ a:hover { text-decoration:underline; }
         <div class="success"><?= htmlspecialchars($_GET['success']) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="backend/login.php">
+    <form method="post" action="/backend/login.php">
         <label for="email">Email or Username</label>
         <input id="email" name="email" required>
 
@@ -48,7 +46,7 @@ a:hover { text-decoration:underline; }
     </form>
 
     <p style="margin-top:.8rem; font-size:.85rem; text-align:center;">
-        Don’t have an account? <a href="register.php">Sign Up</a>
+        Don’t have an account? <a href="/register.php">Sign Up</a>
     </p>
 </div>
 </body>

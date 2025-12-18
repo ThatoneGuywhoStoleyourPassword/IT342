@@ -43,21 +43,23 @@ nav a:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
+// NAVBAR FIX (example applied everywhere — SAME STRUCTURE USED ACROSS ALL PAGES)
 <header>
     <div class="logo">Cloud9</div>
-    <nav id="nav-links">
-        <a href="index.php">Home</a>
-        <a href="browse.php">Browse</a>
-        <?php if($userId): ?>
-            <a href="inbox.php">DMs</a>
-            <a href="profile.php">My Profile</a>
-            <a href="backend/logout.php" id="logout-link">Logout</a>
+    <nav>
+        <a href="/index.php">Home</a>
+        <a href="/browse.php">Browse</a>
+        <?php if (!empty($_SESSION['user_id'])): ?>
+            <a href="/inbox.php">DMs</a>
+            <a href="/profile.php">My Profile</a>
+            <a href="/backend/logout.php">Logout</a>
         <?php else: ?>
-            <a href="login.php">Login</a>
-            <a href="register.php">Register</a>
+            <a href="/login.php">Login</a>
+            <a href="/register.php">Register</a>
         <?php endif; ?>
     </nav>
 </header>
+
 
 <main class="container">
     <section>
