@@ -1,50 +1,40 @@
 <?php
-session_start();
 require 'db.php';
 
-$username = trim($_POST['username'] ?? '');
-$email    = trim($_POST['email'] ?? '');
-$pass     = $_POST['password'] ?? '';
-// FIXED: match the frontend field name
-$confirm  = $_POST['password_confirm'] ?? '';
+$email = $_POST['email'] ?? '';
+$username = $_POST['username'] ?? '';
+$password = $_POST['password'] ?? '';
+$password_confirm = $_POST['password_confirm'] ?? '';
 
-if (!$username || !$email || !$pass || !$confirm) {
-    header("Location: /register.php?error=" . urlencode("All fields are required."));
+if(!$email || !$username || !$password || !$password_confirm) {
+    header('Location: ../frontend/register.php?error=All fields are required');
     exit;
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    header("Location: /register.php?error=" . urlencode("Invalid email."));
+if($password !== $password_confirm) {
+    header('Location: ../frontend/register.php?error=Passwords do not match');
     exit;
 }
 
-if ($pass !== $confirm) {
-    header("Location: /register.php?error=" . urlencode("Passwords do not match."));
+// Check if email or username already exists
+$stmt = $db->prepare("SELECT id FROM users WHERE email=? OR username=?");
+$stmt->execute([$email, $username]);
+if($stmt->fetch()) {
+    header('Location: ../frontend/register.php?error=Email or username already taken');
     exit;
 }
 
-$hash = password_hash($pass, PASSWORD_DEFAULT);
+$password_hash = password_hash($password, PASSWORD_DEFAULT);
+$stmt = $db->prepare("INSERT INTO users (email, username, password_hash) VALUES (?,?,?)");
+$stmt->execute([$email, $username, $password_hash]);
 
-try {
-    $stmt = $db->prepare(
-        "INSERT INTO users (email, username, password_hash) VALUES (?, ?, ?)"
-    );
-    $stmt->execute([$email, $username, $hash]);
+// Send verification email
+$token = bin2hex(random_bytes(16));
+$stmt = $db->prepare("INSERT INTO email_verifications (user_id, token) VALUES (?,?)");
+$stmt->execute([$db->lastInsertId(), $token]);
 
-    // Auto-login
-    $_SESSION['user_id']  = $db->lastInsertId();
-    $_SESSION['username'] = $username;
+mail($email, "Verify your Cloud9 account",
+    "Click this link to verify: http://IT342-Project-ALB-1012094198.us-east-2.elb.amazonaws.com/api/verify_email.php?token=$token");
 
-    header("Location: /login.php?registered=1");
-    exit;
-
-} catch (PDOException $e) {
-    if ($e->getCode() == 23000) {
-        header("Location: /register.php?error=" . urlencode("Username or email already exists."));
-        exit;
-    }
-    // For debugging you can temporarily do:
-    // die("DB error: " . $e->getMessage());
-    throw $e;
-}
-
+header('Location: ../frontend/login.php?success=Check your email for verification');
+exit;
