@@ -1,21 +1,12 @@
 <?php
 require 'backend/auth.php';
 require 'backend/db.php';
-
 $userId = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
-// Handle thread selection
+// Fetch threads (keep existing code)
 $selectedThread = $_GET['thread'] ?? null;
-
-if($selectedThread){
-    $stmt = $db->prepare("SELECT * FROM threads WHERE id=? AND (user1_id=? OR user2_id=?)");
-    $stmt->execute([$selectedThread,$userId,$userId]);
-    $thread = $stmt->fetch(PDO::FETCH_ASSOC);
-    if(!$thread) $selectedThread = null;
-}
-
-// Fetch all threads
+$threads = [];
 $stmt = $db->prepare("
     SELECT t.*, u1.username as user1_name, u2.username as user2_name
     FROM threads t
@@ -33,6 +24,15 @@ if($selectedThread){
     $stmt = $db->prepare("SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.thread_id=? ORDER BY created_at ASC");
     $stmt->execute([$selectedThread]);
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// User search
+$searchResults = [];
+if(!empty($_GET['search_user'])){
+    $searchTerm = $_GET['search_user'];
+    $stmt = $db->prepare("SELECT id, username FROM users WHERE username LIKE ? AND id != ?");
+    $stmt->execute(["%$searchTerm%", $userId]);
+    $searchResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 <!DOCTYPE html>
@@ -79,6 +79,8 @@ button:hover { background:#00acc1; }
 <main class="container">
     <section class="thread-list">
         <h2>Messages</h2>
+        <input type="text" id="user-search" placeholder="Search users..." style="width:100%; padding:.5rem; margin-bottom:.5rem;">
+        <div id="search-results"></div>
         <?php foreach($threads as $t): 
             $otherUser = ($t['user1_id']==$userId)? $t['user2_name'] : $t['user1_name'];
         ?>
@@ -91,9 +93,7 @@ button:hover { background:#00acc1; }
 
     <section class="chat">
         <?php if($selectedThread): ?>
-            <div class="chat-header">
-                <div><strong>Chat with <?= htmlspecialchars($otherUser) ?></strong></div>
-            </div>
+            <div class="chat-header"><div><strong>Chat with <?= htmlspecialchars($otherUser) ?></strong></div></div>
             <div class="messages">
                 <?php foreach($messages as $m): ?>
                     <div class="msg <?= ($m['sender_id']==$userId)?'me':'them' ?>">
@@ -108,11 +108,23 @@ button:hover { background:#00acc1; }
                 <button type="submit">Send</button>
             </form>
         <?php else: ?>
-            <div class="chat-header">
-                <strong>Select a thread to start chatting</strong>
-            </div>
+            <div class="chat-header"><strong>Select a thread to start chatting</strong></div>
         <?php endif; ?>
     </section>
 </main>
+
+<script>
+// AJAX search users
+const searchInput = document.getElementById('user-search');
+const resultsDiv = document.getElementById('search-results');
+
+searchInput.addEventListener('input', async ()=>{
+    const term = searchInput.value.trim();
+    if(!term){ resultsDiv.innerHTML=''; return; }
+    const res = await fetch('backend/search_users.php?q='+encodeURIComponent(term));
+    const users = await res.json();
+    resultsDiv.innerHTML = users.map(u=>`<div><a href="inbox.php?start_thread=${u.id}">@${u.username}</a></div>`).join('');
+});
+</script>
 </body>
 </html>

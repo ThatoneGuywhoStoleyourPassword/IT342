@@ -5,7 +5,7 @@ require 'backend/db.php';
 $userId   = $_SESSION['user_id'] ?? null;
 $username = $_SESSION['username'] ?? null;
 
-// Fetch latest blogs (exclude expired cloud blogs)
+// Fetch latest blogs
 $query = $db->prepare("
     SELECT b.id, b.title, b.content, b.image, b.is_cloud_blog, b.expires_at, u.username
     FROM blogs b
@@ -45,13 +45,13 @@ nav a:hover { text-decoration:underline; }
 <body>
 <header>
     <div class="logo">Cloud9</div>
-    <nav>
+    <nav id="nav-links">
         <a href="index.php">Home</a>
         <a href="browse.php">Browse</a>
         <?php if($userId): ?>
             <a href="inbox.php">DMs</a>
             <a href="profile.php">My Profile</a>
-            <a href="backend/logout.php">Logout</a>
+            <a href="backend/logout.php" id="logout-link">Logout</a>
         <?php else: ?>
             <a href="login.php">Login</a>
             <a href="register.php">Register</a>
@@ -77,5 +77,24 @@ nav a:hover { text-decoration:underline; }
         </div>
     </section>
 </main>
+
+<script>
+// Real-time login/logout update using fetch
+async function checkSession() {
+    const res = await fetch('backend/check_session.php');
+    const data = await res.json();
+    const nav = document.getElementById('nav-links');
+    nav.innerHTML = '<a href="index.php">Home</a><a href="browse.php">Browse</a>';
+    if(data.logged_in){
+        nav.innerHTML += `<a href="inbox.php">DMs</a>
+                          <a href="profile.php">My Profile</a>
+                          <a href="backend/logout.php" id="logout-link">Logout</a>`;
+    } else {
+        nav.innerHTML += `<a href="login.php">Login</a>
+                          <a href="register.php">Register</a>`;
+    }
+}
+setInterval(checkSession, 5000); // check every 5s
+</script>
 </body>
 </html>

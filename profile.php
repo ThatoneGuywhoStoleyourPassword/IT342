@@ -4,21 +4,18 @@ require 'backend/db.php';
 
 $userId   = $_SESSION['user_id'];
 $username = $_SESSION['username'];
-
 $viewUserId = $_GET['user_id'] ?? $userId;
 
-// Fetch user info
+// Fetch user info, blog counts, followers, following, blogs (keep existing code)
 $stmt = $db->prepare("SELECT username FROM users WHERE id=?");
 $stmt->execute([$viewUserId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 if(!$user) die("User not found");
 
-// Blog counts
 $stmt = $db->prepare("SELECT COUNT(*) FROM blogs WHERE user_id=?");
 $stmt->execute([$viewUserId]);
 $blogCount = $stmt->fetchColumn();
 
-// Followers/following
 $stmt = $db->prepare("SELECT COUNT(*) FROM follows WHERE following_id=?");
 $stmt->execute([$viewUserId]);
 $followers = $stmt->fetchColumn();
@@ -27,7 +24,6 @@ $stmt = $db->prepare("SELECT COUNT(*) FROM follows WHERE follower_id=?");
 $stmt->execute([$viewUserId]);
 $following = $stmt->fetchColumn();
 
-// Fetch user's blogs
 $stmt = $db->prepare("SELECT * FROM blogs WHERE user_id=? AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY created_at DESC");
 $stmt->execute([$viewUserId]);
 $blogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -93,9 +89,23 @@ nav a:hover { text-decoration:underline; }
         </div>
     </section>
 
+    <?php if($userId === $viewUserId): ?>
+        <section>
+            <h2 class="section-title">Post a new blog</h2>
+            <form id="blog-form" enctype="multipart/form-data">
+                <input type="text" name="title" placeholder="Title" required style="width:100%;margin-bottom:.5rem;">
+                <textarea name="content" placeholder="Content" required style="width:100%;margin-bottom:.5rem;"></textarea>
+                <label><input type="checkbox" name="cloud_blog"> Cloud blog (expires in 24h)</label><br><br>
+                <input type="file" name="image"><br><br>
+                <button type="submit">Post</button>
+            </form>
+            <div id="blog-message" style="margin-top:.5rem;color:green;"></div>
+        </section>
+    <?php endif; ?>
+
     <section>
         <h2 class="section-title">Recent blogs</h2>
-        <div class="blog-list">
+        <div class="blog-list" id="blog-list">
             <?php foreach($blogs as $b): ?>
                 <div class="card">
                     <h3><?= htmlspecialchars($b['title']) ?></h3>
@@ -109,5 +119,22 @@ nav a:hover { text-decoration:underline; }
         </div>
     </section>
 </main>
+
+<script>
+// AJAX blog post
+document.getElementById('blog-form')?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const res = await fetch('backend/post_blog.php', {method:'POST', body:formData});
+    if(res.ok){
+        document.getElementById('blog-message').innerText = 'Blog posted!';
+        form.reset();
+        setTimeout(()=>location.reload(), 1000);
+    } else {
+        document.getElementById('blog-message').innerText = 'Failed to post blog';
+    }
+});
+</script>
 </body>
 </html>
