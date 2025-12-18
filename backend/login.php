@@ -19,10 +19,11 @@ if (!$user || !password_verify($password, $user['password_hash'])) {
     exit;
 }
 
-if (!$user['verified']) {
-    header('Location: /login.php?error=Email not verified');
-    exit;
-}
+// Remove email verification check
+// if (!$user['verified']) {
+//     header('Location: /login.php?error=Email not verified');
+//     exit;
+// }
 
 $_SESSION['user_id']  = $user['id'];
 $_SESSION['username'] = $user['username'];
