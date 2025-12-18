@@ -17,4 +17,4 @@ $stmt->execute([$thread_id, $userId, $content, date('Y-m-d H:i:s')]);
 $update = $db->prepare("UPDATE threads SET last_message=?, updated_at=? WHERE id=?");
 $update->execute([$content, date('Y-m-d H:i:s'), $thread_id]);
 
-header('Location: ../frontend/inbox.php');
+header('Location: /inbox.php');

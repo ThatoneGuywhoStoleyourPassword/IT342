@@ -21,4 +21,4 @@ if($author){
         "Someone replied to your blog: http://IT342-Project-ALB-1012094198.us-east-2.elb.amazonaws.com/frontend/blog_view.php?id=$blogId");
 }
 
-header('Location: ../frontend/blog_view.php?id='.$blogId);
+header('Location: /blog_view.php?id='.$blogId);

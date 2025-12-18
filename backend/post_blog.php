@@ -30,4 +30,4 @@ foreach($followers as $follower){
         "Check out the new blog: http://IT342-Project-ALB-1012094198.us-east-2.elb.amazonaws.com/frontend/blog_view.php?id=".$db->lastInsertId());
 }
 
-header('Location: ../frontend/profile.php');
+header('Location: /profile.php');

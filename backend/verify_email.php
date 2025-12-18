@@ -16,4 +16,4 @@ if(!$user) {
 $update = $db->prepare("UPDATE users SET is_verified=1, verification_code=NULL WHERE id=?");
 $update->execute([$user['id']]);
 
-echo "Email verified! You can now <a href='../frontend/login.php'>login</a>.";
+echo "Email verified! You can now <a href='/login.php'>login</a>.";

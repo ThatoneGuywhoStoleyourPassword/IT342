@@ -7,12 +7,12 @@ $password = $_POST['password'] ?? '';
 $password_confirm = $_POST['password_confirm'] ?? '';
 
 if(!$email || !$username || !$password || !$password_confirm) {
-    header('Location: ../frontend/register.php?error=All fields are required');
+    header('Location: /register.php?error=All fields are required');
     exit;
 }
 
 if($password !== $password_confirm) {
-    header('Location: ../frontend/register.php?error=Passwords do not match');
+    header('Location: /register.php?error=Passwords do not match');
     exit;
 }
 
@@ -20,7 +20,7 @@ if($password !== $password_confirm) {
 $stmt = $db->prepare("SELECT id FROM users WHERE email=? OR username=?");
 $stmt->execute([$email, $username]);
 if($stmt->fetch()) {
-    header('Location: ../frontend/register.php?error=Email or username already taken');
+    header('Location: /register.php?error=Email or username already taken');
     exit;
 }
 
@@ -36,5 +36,5 @@ $stmt->execute([$db->lastInsertId(), $token]);
 mail($email, "Verify your Cloud9 account",
     "Click this link to verify: http://IT342-Project-ALB-1012094198.us-east-2.elb.amazonaws.com/api/verify_email.php?token=$token");
 
-header('Location: ../frontend/login.php?success=Check your email for verification');
+header('Location: /login.php?success=Check your email for verification');
 exit;

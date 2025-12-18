@@ -1,7 +1,7 @@
 <?php
-require '../backend/auth.php';
-$userId   = $_SESSION['user_id'];
-$username = $_SESSION['username'];
+session_start();
+$userId   = $_SESSION['user_id'] ?? null;
+$username = $_SESSION['username'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
