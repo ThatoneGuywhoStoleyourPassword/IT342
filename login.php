@@ -1,4 +1,3 @@
-// login.php  (FRONTEND PAGE)
 <?php
 session_start();
 // REMOVED auto-redirect so Login always loads even if logged in
