@@ -56,7 +56,6 @@ button:hover { background:#00acc1; }
 </style>
 </head>
 <body>
-// NAVBAR FIX (example applied everywhere — SAME STRUCTURE USED ACROSS ALL PAGES)
 <header>
     <div class="logo">Cloud9</div>
     <nav>

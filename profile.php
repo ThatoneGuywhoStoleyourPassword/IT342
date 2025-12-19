@@ -94,7 +94,6 @@ nav a:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
-// NAVBAR FIX (example applied everywhere — SAME STRUCTURE USED ACROSS ALL PAGES)
 <header>
     <div class="logo">Cloud9</div>
     <nav>
